@@ -7,7 +7,7 @@ namespace cvrp {
 class LSOperator {
 public:
     virtual ~LSOperator() = default;
-    /// Aplica el operador una vez; true si la solución mejora.
+    /// Applies the operator one time; true if solution its better.
     virtual bool apply(Solution& sol, const Instance& inst) = 0;
 };
 

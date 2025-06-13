@@ -1,11 +1,11 @@
-# ───────────────  cvrp-heuristics / Makefile  ────────────────
+# ───────────────  cvrp-heuristics / Makefile  ──────────────────────────
 CXX      := g++
 CXXFLAGS := -std=c++20 -Wall -Wextra -O2 -Iinclude
-LDFLAGS  :=                       # add libs here if ever needed
+LDFLAGS  :=
 
-# ---------------------------------------------------------------------------
-#  1)  project object files
-# ---------------------------------------------------------------------------
+# ----------------------------------------------------------------------
+#  1)  normal CLI build
+# ----------------------------------------------------------------------
 SRC_CORE := $(wildcard src/*.cpp) \
             $(wildcard src/*/*.cpp) \
             $(wildcard src/*/*/*.cpp)
@@ -13,7 +13,7 @@ SRC_CORE := $(wildcard src/*.cpp) \
 SRC_APP  := $(wildcard apps/*.cpp)          # CLI driver(s) with main()
 
 OBJ_CORE := $(SRC_CORE:.cpp=.o)
-OBJ_APP  := $(SRC_APP:.cpp=.o)              # contains apps/main.o
+OBJ_APP  := $(SRC_APP:.cpp=.o)
 
 TARGET   := bin/cvrp-cli
 
@@ -22,11 +22,9 @@ all: $(TARGET)
 $(TARGET): $(OBJ_CORE) $(OBJ_APP) | bin
 	$(CXX) $^ $(LDFLAGS) -o $@
 
-# create bin/ if missing
 bin:
 	@mkdir "bin" 2>NUL || exit 0
 
-# pattern rule for every .cpp → .o
 %.o: %.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
@@ -35,19 +33,26 @@ clean:
 
 .PHONY: all clean
 
-# ---------------------------------------------------------------------------
-#  2)  simple ASSERT-based unit tests  (no GoogleTest)
-# ---------------------------------------------------------------------------
+# ─────────────────────────  unit tests  ─────────────────────────
 TEST_SRC := $(wildcard tests/*.cpp)
 TEST_OBJ := $(TEST_SRC:.cpp=.o)
+TEST_EXE := $(patsubst tests/%.cpp, bin/test-%, $(TEST_SRC))
 
 tests/%.o: tests/%.cpp
 	$(CXX) $(CXXFLAGS) -Iinclude -c $< -o $@
 
-# link tests WITHOUT apps/main.o  → avoids duplicate-main linker error
-test: $(OBJ_CORE) $(TEST_OBJ) | bin
-	$(CXX) $^ -o bin/tests
-	@echo "Running tests..."
-	@bin/tests && echo "All tests passed."
+# link each test as its own exe (no apps/main.o ⇒ no duplicate main)
+bin/test-%: tests/%.cpp $(OBJ_CORE) | bin
+	$(CXX) $(CXXFLAGS) -Iinclude $< $(OBJ_CORE) -o $@
 
-.PHONY: test
+# helper target that runs one exe and stops on failure
+run-%: bin/test-%
+	@echo "Running $<"; \
+	 $<
+
+# 'test' depends on every run-XXX helper; if any fails make stops
+test: $(patsubst bin/%,run-%,$(TEST_EXE))
+	@echo "All tests passed."
+
+.PHONY: test $(patsubst bin/%,run-%,$(TEST_EXE))
+
