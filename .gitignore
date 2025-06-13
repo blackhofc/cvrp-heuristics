@@ -1,0 +1,43 @@
+# Binaries and object files
+
+bin/
+\*.exe
+\*.out
+\*.o
+\*.obj
+
+# Unit‑test executables
+
+bin/test-\*
+
+# Build folders (optional CMake or IDE builds)
+
+build/
+CMakeFiles/
+\*.cmake
+
+# IDE / editor files
+
+.vscode/
+.idea/
+\*.code-workspace
+
+# OS metadata
+
+.DS\_Store
+Thumbs.db
+
+# Logs & temp
+
+\*.log
+\*.tmp
+
+# Backup / swap files
+
+\*\~
+\*.swp
+
+# Ignore data output (not raw instance files)
+
+\*.csv
+\*.json
